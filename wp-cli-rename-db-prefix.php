@@ -259,22 +259,26 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 	protected function update_options_table() {
 		global $wpdb;
 
-		$update_query = $wpdb->prepare( "
-			UPDATE `{$this->new_prefix}options`
-			SET   option_name = %s
-			WHERE option_name = %s
-			LIMIT 1;",
-			$this->new_prefix . 'user_roles',
-			$this->old_prefix . 'user_roles'
-		);
+		if ( $this->old_prefix == $this->new_prefix ) {
+			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to options_table necessary.');
+		} else {
+			$update_query = $wpdb->prepare( "
+				UPDATE `{$this->new_prefix}options`
+				SET   option_name = %s
+				WHERE option_name = %s
+				LIMIT 1;",
+				$this->new_prefix . 'user_roles',
+				$this->old_prefix . 'user_roles'
+			);
 
-		if ( $this->is_dry_run ) {
-			\WP_CLI::line( $update_query );
-			return;
-		}
+			if ( $this->is_dry_run ) {
+				\WP_CLI::line( $update_query );
+				return;
+			}
 
-		if ( ! $wpdb->query( $update_query ) ) {
-			throw new Exception( 'MySQL error: ' . $wpdb->last_error );
+			if ( ! $wpdb->query( $update_query ) ) {
+				throw new Exception( 'MySQL error: ' . $wpdb->last_error );
+			}
 		}
 	}
 
@@ -286,41 +290,45 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 	protected function update_usermeta_table() {
 		global $wpdb;
 
-		if ( $this->is_dry_run ) {
-			$rows = $wpdb->get_results( "SELECT meta_key FROM `{$this->old_prefix}usermeta`;" );
+		if ( $this->old_prefix == $this->new_prefix ) {
+			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to options_table necessary.');
 		} else {
-			$rows = $wpdb->get_results( "SELECT meta_key FROM `{$this->new_prefix}usermeta`;" );
-		}
-
-		if ( ! $rows ) {
-			throw new Exception( 'MySQL error: ' . $wpdb->last_error );
-		}
-
-		foreach ( $rows as $row ) {
-			$meta_key_prefix = substr( $row->meta_key, 0, strlen( $this->old_prefix ) );
-
-			if ( $meta_key_prefix !== $this->old_prefix ) {
-				continue;
-			}
-
-			$new_key = $this->new_prefix . substr( $row->meta_key, strlen( $this->old_prefix ) );
-
-			$update_query = $wpdb->prepare( "
-				UPDATE `{$this->new_prefix}usermeta`
-				SET meta_key=%s
-				WHERE meta_key=%s
-				LIMIT 1;",
-				$new_key,
-				$row->meta_key
-			);
-
 			if ( $this->is_dry_run ) {
-				\WP_CLI::line( $update_query );
-				continue;
+				$rows = $wpdb->get_results( "SELECT meta_key FROM `{$this->old_prefix}usermeta`;" );
+			} else {
+				$rows = $wpdb->get_results( "SELECT meta_key FROM `{$this->new_prefix}usermeta`;" );
 			}
 
-			if ( ! $wpdb->query( $update_query ) ) {
+			if ( ! $rows ) {
 				throw new Exception( 'MySQL error: ' . $wpdb->last_error );
+			}
+
+			foreach ( $rows as $row ) {
+				$meta_key_prefix = substr( $row->meta_key, 0, strlen( $this->old_prefix ) );
+
+				if ( $meta_key_prefix !== $this->old_prefix ) {
+					continue;
+				}
+
+				$new_key = $this->new_prefix . substr( $row->meta_key, strlen( $this->old_prefix ) );
+
+				$update_query = $wpdb->prepare( "
+					UPDATE `{$this->new_prefix}usermeta`
+					SET meta_key=%s
+					WHERE meta_key=%s
+					LIMIT 1;",
+					$new_key,
+					$row->meta_key
+				);
+
+				if ( $this->is_dry_run ) {
+					\WP_CLI::line( $update_query );
+					continue;
+				}
+
+				if ( ! $wpdb->query( $update_query ) ) {
+					throw new Exception( 'MySQL error: ' . $wpdb->last_error );
+				}
 			}
 		}
 	}
