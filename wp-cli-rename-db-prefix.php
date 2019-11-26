@@ -136,6 +136,12 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 			return;
 		}
 
+		if ( $this->old_prefix == $this->new_prefix ) {
+			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to wp-config necessary.' );
+			return;
+		}
+		
+		
 		if ( ! $this->is_config_update ) {
 			\WP_CLI::line( 'Skipping wp-config.php update as requested.' );
 			return;
@@ -186,6 +192,11 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 
 			if ( $this->is_dry_run ) {
 				\WP_CLI::line( $rename_query );
+				continue;
+			}
+
+			if ( $this->old_prefix == $this->new_prefix ) {
+				\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to database necessary.' );
 				continue;
 			}
 
