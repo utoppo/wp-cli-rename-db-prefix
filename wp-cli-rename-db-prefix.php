@@ -181,27 +181,26 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 			throw new Exception( 'MySQL error: ' . $wpdb->last_error );
 		}
 
-		foreach ( $tables as $table ) {
-			$table = substr( $table[0], strlen( $this->old_prefix ) );
-
-			$rename_query = sprintf(
-				"RENAME TABLE `%s` TO `%s`;",
-				$this->old_prefix . $table,
-				$this->new_prefix . $table
-			);
-
-			if ( $this->is_dry_run ) {
-				\WP_CLI::line( $rename_query );
-				continue;
-			}
-
-			if ( $this->old_prefix == $this->new_prefix ) {
-				\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to database necessary.' );
-				continue;
-			}
-
-			if ( false === $wpdb->query( $rename_query ) ) {
-				throw new Exception( 'MySQL error: ' . $wpdb->last_error );
+		if ( $this->old_prefix == $this->new_prefix ) {
+			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to database necessary.');
+		} else {
+			foreach ( $tables as $table ) {
+				$table = substr( $table[0], strlen( $this->old_prefix ) );
+	
+				$rename_query = sprintf(
+					"RENAME TABLE `%s` TO `%s`;",
+					$this->old_prefix . $table,
+					$this->new_prefix . $table
+				);
+	
+				if ( $this->is_dry_run ) {
+					\WP_CLI::line( $rename_query );
+					continue;
+				}
+	
+				if ( false === $wpdb->query( $rename_query ) ) {
+					throw new Exception( 'MySQL error: ' . $wpdb->last_error );
+				}
 			}
 		}
 	}
