@@ -260,7 +260,7 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 		global $wpdb;
 
 		if ( $this->old_prefix == $this->new_prefix ) {
-			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to options_table necessary.');
+			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to options-table necessary.');
 		} else {
 			$update_query = $wpdb->prepare( "
 				UPDATE `{$this->new_prefix}options`
@@ -291,7 +291,7 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 		global $wpdb;
 
 		if ( $this->old_prefix == $this->new_prefix ) {
-			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to options_table necessary.');
+			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to usermeta-table necessary.');
 		} else {
 			if ( $this->is_dry_run ) {
 				$rows = $wpdb->get_results( "SELECT meta_key FROM `{$this->old_prefix}usermeta`;" );
