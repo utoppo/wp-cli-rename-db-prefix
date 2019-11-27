@@ -101,6 +101,14 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 		}
 	}
 
+	protected is_identical_prefix(section) {
+		if ( $this->old_prefix == $this->new_prefix ) {
+			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to '.section.' necessary.' );
+			return true;
+		} 
+		return false;
+	}
+
 	/**
 	 * Confirm that the user wants to rename the prefix
 	 */
@@ -136,11 +144,7 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 			return;
 		}
 
-		if ( $this->old_prefix == $this->new_prefix ) {
-			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to wp-config necessary.' );
-			return;
-		}
-		
+		$this->is_identical_prefix('wp-config') ? return;
 		
 		if ( ! $this->is_config_update ) {
 			\WP_CLI::line( 'Skipping wp-config.php update as requested.' );
@@ -180,10 +184,10 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 		if ( ! $tables ) {
 			throw new Exception( 'MySQL error: ' . $wpdb->last_error );
 		}
-
-		if ( $this->old_prefix == $this->new_prefix ) {
-			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to database necessary.');
-		} else {
+		$this->is_identical_prefix('database') ? return;
+		// if ( $this->old_prefix == $this->new_prefix ) {
+		// 	\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to database necessary.');
+		// } else {
 			foreach ( $tables as $table ) {
 				$table = substr( $table[0], strlen( $this->old_prefix ) );
 	
@@ -202,7 +206,7 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 					throw new Exception( 'MySQL error: ' . $wpdb->last_error );
 				}
 			}
-		}
+		// }
 	}
 
 	/**
@@ -259,9 +263,11 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 	protected function update_options_table() {
 		global $wpdb;
 
-		if ( $this->old_prefix == $this->new_prefix ) {
-			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to options-table necessary.');
-		} else {
+		$this->is_identical_prefix('options-table') ? return;
+
+		// if ( $this->old_prefix == $this->new_prefix ) {
+		// 	\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to options-table necessary.');
+		// } else {
 			$update_query = $wpdb->prepare( "
 				UPDATE `{$this->new_prefix}options`
 				SET   option_name = %s
@@ -279,7 +285,7 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 			if ( ! $wpdb->query( $update_query ) ) {
 				throw new Exception( 'MySQL error: ' . $wpdb->last_error );
 			}
-		}
+		// }
 	}
 
 	/**
@@ -290,9 +296,10 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 	protected function update_usermeta_table() {
 		global $wpdb;
 
-		if ( $this->old_prefix == $this->new_prefix ) {
-			\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to usermeta-table necessary.');
-		} else {
+		// if ( $this->old_prefix == $this->new_prefix ) {
+		// 	\WP_CLI::line( 'The new prefix is the same as the old prefix. No adjustments to usermeta-table necessary.');
+		// } else {
+			$this->is_identical_prefix('usermeta-table') ? return;
 			if ( $this->is_dry_run ) {
 				$rows = $wpdb->get_results( "SELECT meta_key FROM `{$this->old_prefix}usermeta`;" );
 			} else {
@@ -329,7 +336,7 @@ class WP_CLI_Rename_DB_Prefix extends \WP_CLI_Command {
 				if ( ! $wpdb->query( $update_query ) ) {
 					throw new Exception( 'MySQL error: ' . $wpdb->last_error );
 				}
-			}
+			// }
 		}
 	}
 }
